@@ -16,14 +16,14 @@ you@you chat-api % source venv/bin/activate
 
 ### install package using a setup.py and pip
 
-To install package, from inside the top-level or main minichatgpt directory (the one where if you `ls` you see `setup.py`, `requirements.txt` and `README.md` in the same folder as you)
+To install package for development, from inside the top-level or main minichatgpt directory (the one where if you `ls` you see `setup.py`, `requirements.txt` and `README.md` in the same folder as you)
 run the below at the command line or terminal:
 
 ```console
 pip install -e .
 ```
 
-the above is meant for production, for development packages like jupyter notebook and matplotlib, run:
+leave out the `-e` for production `pip install .`, for other development packages like jupyter notebook and matplotlib, run:
 
 ```console
 pip install -e ".[interactive]"
@@ -45,4 +45,6 @@ Now from directories other than the top-level or main minichatgpt directory you 
 import minichatgpt
 from minichatgpt.example_script import example_class_function
 ```
+
+and the changes you make to example_class_function will be available to you with your next `import minichatgpt`, no `pip install -e .` required
 
