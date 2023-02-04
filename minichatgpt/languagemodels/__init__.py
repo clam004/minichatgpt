@@ -1,0 +1,5 @@
+from .modeling_base import PreTrainedModelWrapper, create_reference_model
+from .modeling_value_head import AutoModelForCausalLMWithValueHead, AutoModelForSeq2SeqLMWithValueHead
+
+
+SUPPORTED_ARCHITECTURES = (AutoModelForCausalLMWithValueHead, AutoModelForSeq2SeqLMWithValueHead)
