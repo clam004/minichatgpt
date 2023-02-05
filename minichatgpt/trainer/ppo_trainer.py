@@ -29,7 +29,7 @@ from ..core import (
 )
 from ..languagemodels import SUPPORTED_ARCHITECTURES, PreTrainedModelWrapper, create_reference_model
 from . import AdaptiveKLController, BaseTrainer, FixedKLController, PPOConfig
-
+from ..processdata.collators import collator
 
 MODEL_CARD_TEMPLATE = """---
 license: apache-2.0
@@ -101,7 +101,7 @@ class PPOTrainer(BaseTrainer):
         tokenizer: Union[PreTrainedTokenizer, PreTrainedTokenizerFast] = None,
         dataset: Optional[Union[torch.utils.data.Dataset, Dataset]] = None,
         optimizer: Optional[torch.optim.Optimizer] = None,
-        data_collator=None,
+        data_collator=collator,
         num_shared_layers: Optional[int] = None,
         lr_scheduler: Optional[torch.optim.lr_scheduler._LRScheduler] = None,
     ):

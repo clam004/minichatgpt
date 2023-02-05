@@ -1,4 +1,4 @@
-from .core import set_seed
+from .core import set_seed, LengthSampler
 from .languagemodels import (
     AutoModelForCausalLMWithValueHead,
     AutoModelForSeq2SeqLMWithValueHead,
@@ -6,3 +6,4 @@ from .languagemodels import (
     create_reference_model,
 )
 from .trainer import PPOConfig, PPOTrainer
+from .lab import Lab

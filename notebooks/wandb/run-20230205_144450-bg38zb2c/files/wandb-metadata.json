@@ -1,0 +1,41 @@
+{
+    "os": "macOS-12.0.1-x86_64-i386-64bit",
+    "python": "3.10.0",
+    "heartbeatAt": "2023-02-05T22:44:58.190192",
+    "startedAt": "2023-02-05T22:44:50.607583",
+    "docker": null,
+    "cuda": null,
+    "args": null,
+    "state": "running",
+    "program": "notebooks/part_1_tutorial.ipynb",
+    "root": "/Users/carson/projects/minichatgpt",
+    "git": {
+        "remote": "https://github.com/clam004/mini-chatgpt.git",
+        "commit": "e7553f0e8e47b6ac9547cfebb565ee99f40a3fc7"
+    },
+    "email": null,
+    "host": "cc-laptop-carson.attlocal.net",
+    "username": "carson",
+    "executable": "/Users/carson/.pyenv/versions/3.10.0/bin/python3.10",
+    "cpu_count": 8,
+    "cpu_count_logical": 8,
+    "cpu_freq": {
+        "current": 2300,
+        "min": 2300,
+        "max": 2300
+    },
+    "cpu_freq_per_core": [
+        {
+            "current": 2300,
+            "min": 2300,
+            "max": 2300
+        }
+    ],
+    "disk": {
+        "total": 931.546989440918,
+        "used": 23.704036712646484
+    },
+    "memory": {
+        "total": 16.0
+    }
+}
