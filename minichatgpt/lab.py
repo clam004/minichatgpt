@@ -78,6 +78,8 @@ class Lab():
 
         self.ppo_trainer = PPOTrainer(config, new_policy, old_policy, tokenizer, dataset, data_collator)
 
+        self.batches_per_epoch = len(self.ppo_trainer.dataloader)
+
         self.device = self.ppo_trainer.accelerator.device
         if self.ppo_trainer.accelerator.num_processes == 1:
             # to avoid a `pipeline` bug
