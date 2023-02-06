@@ -51,6 +51,6 @@ and the changes you make to example_class_function will be available to you with
 
 **Forward batching**: Since the models can be fairly big and we want to rollout large PPO batches this can lead to out-of-memory errors when doing the forward passes for text generation and sentiment analysis. We introduce the parameter `forward_batch_size` to split the forward passes into smaller batches. Although this hurts performance a little this is neglectible compared to the computations of the backward passes when optimizing the model. The same parameter is used in the `PPOTrainer` when doing forward passes. The `batch_size` should multiple of `forward_batch_size`.
 
-# References
-- https://github.com/lvwerra/trl 
+# References and Credits 
+alot of the code is from https://github.com/lvwerra/trl 
 

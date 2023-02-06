@@ -2,6 +2,8 @@ import os
 
 import torch
 from transformers import pipeline, AutoTokenizer
+
+from .core import LengthSampler
 from .languagemodels.modeling_value_head import AutoModelForCausalLMWithValueHead
 from .trainer import PPOTrainer
 from .processdata.collators import collator
@@ -12,9 +14,22 @@ class Lab():
 
     def __init__(self,
         config=None,
+        output_min_length = 4,
+        output_max_length = 16,
     ):
         self.config = config
+
         os.environ['TOKENIZERS_PARALLELISM'] = 'true'
+
+        self.generation_kwargs = {
+            "min_length":-1,
+            "top_k": 0.0,
+            "top_p": 1.0,
+            "do_sample": True,
+            "pad_token_id": tokenizer.eos_token_id
+        }
+
+        self.output_length_sampler = LengthSampler(output_min_length, output_max_length)
 
     def build_dataset(self,
         config = None,
