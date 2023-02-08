@@ -1,15 +1,14 @@
 from ..trainer import PPOConfig
 
-imdb_config = PPOConfig(
+config = PPOConfig(
     model_name="lvwerra/gpt2-imdb",
     learning_rate=1.41e-5,
-    log_with="wandb",
+    batch_size = 4,
 )
 
-imdb_sent_kwargs = {
+sent_kwargs = {
     "return_all_scores": True,
     "function_to_apply": "none",
-    "batch_size": imdb_config.forward_batch_size
+    "batch_size": config.forward_batch_size
 }
 
-ABC = "a"

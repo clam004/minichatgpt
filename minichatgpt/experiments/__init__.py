@@ -1,1 +1,1 @@
-from .imdb import imdb_config, imdb_sent_kwargs
+from .imdb import config, sent_kwargs

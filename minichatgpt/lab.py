@@ -14,11 +14,14 @@ class Lab():
 
     def __init__(self,
         config=None,
-        output_min_length = 4,
-        output_max_length = 16,
     ):
         self.config = config
 
+    def set_generation_config(self,
+        output_min_length = 4,
+        output_max_length = 16,
+        pad_token_id=50256,
+    ):
         os.environ['TOKENIZERS_PARALLELISM'] = 'true'
 
         self.generation_kwargs = {
@@ -26,7 +29,7 @@ class Lab():
             "top_k": 0.0,
             "top_p": 1.0,
             "do_sample": True,
-            "pad_token_id": tokenizer.eos_token_id
+            "pad_token_id": pad_token_id, 
         }
 
         self.output_length_sampler = LengthSampler(output_min_length, output_max_length)
