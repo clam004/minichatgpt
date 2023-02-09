@@ -5,6 +5,7 @@ class AdaptiveKLController:
     """
     Adaptive KL controller described in the paper:
     https://arxiv.org/pdf/1909.08593.pdf
+    Refered to as the "log-space proportional controller"
     """
 
     def __init__(self, init_kl_coef, target, horizon):
