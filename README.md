@@ -53,8 +53,6 @@ and the changes you make to example_class_function will be available to you with
 
 # References and Credits 
 
-$
-
 @misc{vonwerra2022trl,
   author = {Leandro von Werra and Younes Belkada and Lewis Tunstall and Edward Beeching and Tristan Thrush and Nathan Lambert},
   title = {TRL: Transformer Reinforcement Learning},
@@ -64,4 +62,3 @@ $
   howpublished = {\url{https://github.com/lvwerra/trl}}
 }
 
-$
