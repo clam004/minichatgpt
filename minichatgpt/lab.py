@@ -6,7 +6,6 @@ from transformers import pipeline, AutoTokenizer
 from .core import LengthSampler
 from .languagemodels.modeling_value_head import AutoModelForCausalLMWithValueHead
 from .trainer import PPOTrainer
-from .processdata.collators import collator
 from .processdata.build_dataset import build_dataset
 
 
@@ -18,6 +17,7 @@ class Lab():
         self.config = config
 
     def set_generation_config(self,
+        do_sample=True,
         output_min_length = 4,
         output_max_length = 16,
         pad_token_id=50256,
@@ -28,7 +28,7 @@ class Lab():
             "min_length":-1,
             "top_k": 0.0,
             "top_p": 1.0,
-            "do_sample": True,
+            "do_sample": do_sample,
             "pad_token_id": pad_token_id, 
         }
 
@@ -76,10 +76,9 @@ class Lab():
         old_policy, 
         tokenizer, 
         dataset, 
-        data_collator = collator,
     ):
 
-        self.ppo_trainer = PPOTrainer(config, new_policy, old_policy, tokenizer, dataset, data_collator)
+        self.ppo_trainer = PPOTrainer(config, new_policy, old_policy, tokenizer, dataset)
 
         self.batches_per_epoch = len(self.ppo_trainer.dataloader)
 

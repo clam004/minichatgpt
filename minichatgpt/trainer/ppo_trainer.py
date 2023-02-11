@@ -29,7 +29,7 @@ from ..core import (
 )
 from ..languagemodels import SUPPORTED_ARCHITECTURES, PreTrainedModelWrapper, create_reference_model
 from . import AdaptiveKLController, BaseTrainer, FixedKLController, PPOConfig
-from ..processdata.collators import collator
+from ..processdata.collators import dataloader_data_collator
 
 MODEL_CARD_TEMPLATE = """---
 license: apache-2.0
@@ -101,7 +101,7 @@ class PPOTrainer(BaseTrainer):
         tokenizer: Union[PreTrainedTokenizer, PreTrainedTokenizerFast] = None,
         dataset: Optional[Union[torch.utils.data.Dataset, Dataset]] = None,
         optimizer: Optional[torch.optim.Optimizer] = None,
-        data_collator=collator,
+        dataloader_data_collator=dataloader_data_collator,
         num_shared_layers: Optional[int] = None,
         lr_scheduler: Optional[torch.optim.lr_scheduler._LRScheduler] = None,
     ):
@@ -183,9 +183,15 @@ class PPOTrainer(BaseTrainer):
                 UserWarning,
             )
         self.dataset = dataset
+        self.dataloader_data_collator = dataloader_data_collator
         self._signature_columns = None
+
         if self.dataset is not None:
-            self.dataloader = self.prepare_dataloader(self.dataset, data_collator)
+            self.dataloader = self.prepare_dataloader(
+                self.dataset, 
+                self.dataloader_data_collator,
+            )
+
         elif self.dataset is None and self.accelerator.num_processes > 1:
             warnings.warn(
                 "No dataset is provided. In a multi-GPU setting, this will lead to an error. You should",

@@ -1,1 +1,1 @@
-from .collators import collator
+from .collators import dataloader_data_collator

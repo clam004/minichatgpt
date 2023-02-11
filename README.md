@@ -52,5 +52,13 @@ and the changes you make to example_class_function will be available to you with
 **Forward batching**: Since the models can be fairly big and we want to rollout large PPO batches this can lead to out-of-memory errors when doing the forward passes for text generation and sentiment analysis. We introduce the parameter `forward_batch_size` to split the forward passes into smaller batches. Although this hurts performance a little this is neglectible compared to the computations of the backward passes when optimizing the model. The same parameter is used in the `PPOTrainer` when doing forward passes. The `batch_size` should multiple of `forward_batch_size`.
 
 # References and Credits 
-alot of the code is from https://github.com/lvwerra/trl 
+
+@misc{vonwerra2022trl,
+  author = {Leandro von Werra and Younes Belkada and Lewis Tunstall and Edward Beeching and Tristan Thrush and Nathan Lambert},
+  title = {TRL: Transformer Reinforcement Learning},
+  year = {2020},
+  publisher = {GitHub},
+  journal = {GitHub repository},
+  howpublished = {\url{https://github.com/lvwerra/trl}}
+}
 
