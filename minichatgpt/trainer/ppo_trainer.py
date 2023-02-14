@@ -567,7 +567,7 @@ class PPOTrainer(BaseTrainer):
 
                 if len(logprobs[j, start:end]) < 2:
                     raise ValueError("Responses are too short. Make sure they are at least 4 tokens long.")
-
+                
                 all_values.append(v[j, start:end])
                 all_logprobs.append(logprobs[j, start:end])
                 all_ref_logprobs.append(ref_logprobs[j, start:end])
@@ -586,7 +586,7 @@ class PPOTrainer(BaseTrainer):
         """
         Train one PPO minibatch
         Args:
-            logprobs (`torch.FloatTensor`):
+            old_logprobs (`torch.FloatTensor`):
                 Log probabilities of the model, shape [batch_size, response_length]
             values (`torch.FloatTensor`):
                 Values of the value head, shape [batch_size, response_length]
@@ -651,6 +651,7 @@ class PPOTrainer(BaseTrainer):
             model_input = response
 
         logits, _, vpred = self.model(**input_kwargs)
+
         gen_len = rewards.shape[-1]
 
         if self.is_encoder_decoder:
