@@ -76,9 +76,17 @@ class Lab():
         old_policy, 
         tokenizer, 
         dataset, 
+        dataloader_collator,
     ):
 
-        self.ppo_trainer = PPOTrainer(config, new_policy, old_policy, tokenizer, dataset)
+        self.ppo_trainer = PPOTrainer(
+            config, 
+            new_policy, 
+            old_policy,
+            tokenizer, 
+            dataset, 
+            dataloader_collator=dataloader_collator,
+        )
 
         self.batches_per_epoch = len(self.ppo_trainer.dataloader)
 

@@ -29,7 +29,7 @@ from ..core import (
 )
 from ..languagemodels import SUPPORTED_ARCHITECTURES, PreTrainedModelWrapper, create_reference_model
 from . import AdaptiveKLController, BaseTrainer, FixedKLController, PPOConfig
-from ..processdata.collators import dataloader_data_collator
+
 
 MODEL_CARD_TEMPLATE = """---
 license: apache-2.0
@@ -67,6 +67,8 @@ outputs = model(**inputs, labels=inputs["input_ids"])
 class PPOTrainer(BaseTrainer):
     """
     The PPOTrainer uses Proximal Policy Optimization to optimise language models.
+    Note, this trainer is heavily inspired by the original OpenAI learning to summarize work here:
+    https://github.com/openai/summarize-from-feedback
     Attributes:
         **config** (`PPOConfig`) -- Configuration object for PPOTrainer. Check the documentation of `PPOConfig` for more
          details.
@@ -101,7 +103,7 @@ class PPOTrainer(BaseTrainer):
         tokenizer: Union[PreTrainedTokenizer, PreTrainedTokenizerFast] = None,
         dataset: Optional[Union[torch.utils.data.Dataset, Dataset]] = None,
         optimizer: Optional[torch.optim.Optimizer] = None,
-        dataloader_data_collator=dataloader_data_collator,
+        dataloader_collator=None,
         num_shared_layers: Optional[int] = None,
         lr_scheduler: Optional[torch.optim.lr_scheduler._LRScheduler] = None,
     ):
@@ -183,15 +185,11 @@ class PPOTrainer(BaseTrainer):
                 UserWarning,
             )
         self.dataset = dataset
-        self.dataloader_data_collator = dataloader_data_collator
         self._signature_columns = None
 
+        self.dataloader_collator = dataloader_collator
         if self.dataset is not None:
-            self.dataloader = self.prepare_dataloader(
-                self.dataset, 
-                self.dataloader_data_collator,
-            )
-
+            self.dataloader = self.prepare_dataloader(self.dataset, self.dataloader_collator)
         elif self.dataset is None and self.accelerator.num_processes > 1:
             warnings.warn(
                 "No dataset is provided. In a multi-GPU setting, this will lead to an error. You should",
@@ -321,7 +319,7 @@ class PPOTrainer(BaseTrainer):
         Args:
             query_tensor (`torch.LongTensor`):
                 A tensor of shape (`batch_size`, `seq_len`) containing query tokens.
-            gen_kwargs (dict[str, Any]):
+            generation_kwargs (dict[str, Any]):
                 Keyword arguments for generation.
         Returns:
             `torch.LongTensor`: A tensor of shape (`batch_size`, `gen_len`) containing response tokens.
@@ -515,51 +513,62 @@ class PPOTrainer(BaseTrainer):
         all_ref_logprobs = []
         all_values = []
 
+        # attention_masks are create with the same shape as inputs and are
+        # automatically padded by the datacollator to indicate padding tokens
+        if self.is_encoder_decoder:
+            input_data = self.data_collator(
+                [{"input_ids": q, "attention_mask": torch.ones_like(q)} for q in queries]
+            ).to(self.accelerator.device)
+
+            decoder_inputs = self.data_collator(
+                [{"input_ids": r, "attention_mask": torch.ones_like(r)} for r in responses]
+            ).to(self.accelerator.device)
+
+            input_data["decoder_input_ids"] = decoder_inputs["input_ids"]
+            input_data["decoder_attention_mask"] = decoder_inputs["attention_mask"]
+
+            input_data.pop("labels")  # we don't want to compute LM losses
+
+        else:
+            input_ids = [torch.cat([q, r]) for q, r in zip(queries, responses)]
+            input_data = self.data_collator(
+                [{"input_ids": ids, "attention_mask": torch.ones_like(ids)} for ids in input_ids]
+            ).to(self.accelerator.device)
+
         for i in range(int(bs / fbs)):
+            input_kwargs = {key: value[i * fbs : (i + 1) * fbs] for key, value in input_data.items()}
             query_batch = queries[i * fbs : (i + 1) * fbs]
             response_batch = responses[i * fbs : (i + 1) * fbs]
-
-            if self.is_encoder_decoder:
-                input_ids = self.data_collator(query_batch)["input_ids"]
-                decoder_input_ids = self.data_collator(response_batch)["input_ids"]
-
-                input_kwargs = {
-                    "input_ids": input_ids,
-                    "decoder_input_ids": decoder_input_ids,
-                }
-            else:
-                input_ids = self.data_collator([torch.cat([q, r]) for q, r in zip(query_batch, response_batch)])[
-                    "input_ids"
-                ]
-
-                input_kwargs = {
-                    "input_ids": input_ids,
-                }
 
             with torch.no_grad():
                 logits, _, v = self.model(**input_kwargs)
                 ref_logits, _, _ = self.ref_model(**input_kwargs)
 
             if self.is_encoder_decoder:
-                logprobs = logprobs_from_logits(logits[:, :-1, :], decoder_input_ids[:, 1:])
-                ref_logprobs = logprobs_from_logits(ref_logits[:, :-1, :], decoder_input_ids[:, 1:])
+                input_ids = input_kwargs["decoder_input_ids"]
+                attention_mask = input_kwargs["decoder_attention_mask"]
             else:
-                logprobs = logprobs_from_logits(logits[:, :-1, :], input_ids[:, 1:])
-                ref_logprobs = logprobs_from_logits(ref_logits[:, :-1, :], input_ids[:, 1:])
+                input_ids = input_kwargs["input_ids"]
+                attention_mask = input_kwargs["attention_mask"]
+
+            logprobs = logprobs_from_logits(logits[:, :-1, :], input_ids[:, 1:])
+            ref_logprobs = logprobs_from_logits(ref_logits[:, :-1, :], input_ids[:, 1:])
 
             for j in range(fbs):
                 if self.is_encoder_decoder:
                     # Decoder sentence starts always in the index 1 after padding in the Enc-Dec Models
                     start = 1
-                    end = response_batch[j].shape[-1] - 1
+                    end = attention_mask[j, :].sum() - 1
                 else:
                     start = len(query_batch[j]) - 1
-                    end = len(query_batch[j]) + len(response_batch[j]) - 1
+                    if attention_mask[j, 0] == 0:  # offset left padding
+                        start += attention_mask[j, :].nonzero()[0]
+                    end = start + len(response_batch[j])
 
                 if len(logprobs[j, start:end]) < 2:
                     raise ValueError("Responses are too short. Make sure they are at least 4 tokens long.")
 
-                all_values.append(v[j, start - 1 : end - 1])
+                all_values.append(v[j, start:end])
                 all_logprobs.append(logprobs[j, start:end])
                 all_ref_logprobs.append(ref_logprobs[j, start:end])
 
@@ -567,7 +576,7 @@ class PPOTrainer(BaseTrainer):
 
     def train_minibatch(
         self,
-        logprobs: torch.FloatTensor,
+        old_logprobs: torch.FloatTensor,
         values: torch.FloatTensor,
         rewards: torch.FloatTensor,
         query: torch.LongTensor,
@@ -593,7 +602,9 @@ class PPOTrainer(BaseTrainer):
             train_stats (dict[str, `torch.Tensor`]):
                 Dictionary of training statistics
         """
-        loss_p, loss_v, train_stats = self.loss(logprobs, values, rewards, query, response, model_input)
+        logprobs, vpred, logits = self.compute_logits_vpred(model_input, query, response, rewards)
+
+        loss_p, loss_v, train_stats = self.loss(old_logprobs, values, rewards, logits, vpred, logprobs)
         loss = loss_p + loss_v
         self.optimizer.zero_grad()
         self.accelerator.backward(loss)
@@ -623,14 +634,44 @@ class PPOTrainer(BaseTrainer):
             rewards.append(reward)
         return rewards, non_score_rewards
 
+    def compute_logits_vpred(
+        self,
+        model_input,
+        query: torch.LongTensor,
+        response: torch.LongTensor,
+        rewards,
+    ):
+        input_kwargs = {
+            "input_ids": model_input,
+        }
+
+        if self.is_encoder_decoder:
+            input_kwargs["input_ids"] = query
+            input_kwargs["decoder_input_ids"] = response
+            model_input = response
+
+        logits, _, vpred = self.model(**input_kwargs)
+        gen_len = rewards.shape[-1]
+
+        if self.is_encoder_decoder:
+            logprob = logprobs_from_logits(logits[:, :-1, :], model_input[:, 1:])
+            start, end = 1, response.shape[-1] - 1
+            vpred = vpred[:, start:end]
+            logprob = logprob[:, start:end]
+        else:
+            logprob = logprobs_from_logits(logits[:, :-1, :], model_input[:, 1:])
+            logprob, vpred = logprob[:, -gen_len:], vpred[:, -gen_len:]
+
+        return logprob, vpred, logits
+
     def loss(
         self,
         old_logprobs: torch.FloatTensor,
         values: torch.FloatTensor,
         rewards: torch.FloatTensor,
-        query: torch.LongTensor,
-        response: torch.LongTensor,
-        model_input: torch.LongTensor,
+        logits: torch.FloatTensor,
+        vpred: torch.FloatTensor,
+        logprob: torch.FloatTensor,
     ):
         """
         Calculate policy and value losses.
@@ -641,12 +682,12 @@ class PPOTrainer(BaseTrainer):
                 Values of the value head, shape (`batch_size`, `hidden_dim`)
             rewards (`torch.FloatTensor`):
                 Rewards from the reward model, shape (`batch_size`)
-            query (`torch.LongTensor`):
-                Encoded queries, shape (`batch_size`, `query_length`)
-            response (`torch.LongTensor`):
-                Encoded responses, shape (`batch_size`, `response_length`)
-            model_input (`torch.LongTensor`):
-                Concatenated queries and responses, shape (`batch_size`, `query_length+response_length`)
+            logits (`torch.FloatTensor`):
+                Logits of the model, shape (`batch_size`, `response_length`, `vocab_size`)
+            v_pred (`torch.FloatTensor`):
+                Values of the value head, shape (`batch_size`, `response_length`)
+            logprobs (`torch.FloatTensor`):
+                Log probabilities of the model, shape (`batch_size`, `response_length`)
         """
         lastgaelam = 0
         advantages_reversed = []
@@ -662,26 +703,6 @@ class PPOTrainer(BaseTrainer):
         returns = advantages + values
         advantages = whiten(advantages)
         advantages = advantages.detach()
-
-        input_kwargs = {
-            "input_ids": model_input,
-        }
-
-        if self.is_encoder_decoder:
-            input_kwargs["input_ids"] = query
-            input_kwargs["decoder_input_ids"] = response
-            model_input = response
-
-        logits, _, vpred = self.model(**input_kwargs)
-
-        if self.is_encoder_decoder:
-            logprob = logprobs_from_logits(logits[:, :-1, :], model_input[:, 1:])
-            start, end = 1, response.shape[-1] - 1
-            vpred = vpred[:, start - 1 : end - 1]
-            logprob = logprob[:, start:end]
-        else:
-            logprob = logprobs_from_logits(logits[:, :-1, :], model_input[:, 1:])
-            logprob, vpred = logprob[:, -gen_len:], vpred[:, -gen_len - 1 : -1]
 
         vpredclipped = clip_by_value(vpred, values - self.config.cliprange_value, values + self.config.cliprange_value)
 
@@ -772,7 +793,7 @@ class PPOTrainer(BaseTrainer):
             stats (dict[str, Any]):
                 A dictionary of training stats.
             batch (dict[str, Any]):
-                A dictionary of batch data, this containes the queries and responses.
+                A dictionary of batch data, this contains the queries and responses.
             rewards (`List[torch.FloatTensor]`):
                 A tensor of rewards.
         """

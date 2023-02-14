@@ -1,1 +1,1 @@
-from .collators import dataloader_data_collator
+from .collators import imdb_dataloader_collator
