@@ -704,7 +704,7 @@ class PPOTrainer(BaseTrainer):
         returns = advantages + values
         advantages = whiten(advantages)
         advantages = advantages.detach()
-
+        print(values, self.config.cliprange_value)
         vpredclipped = clip_by_value(vpred, values - self.config.cliprange_value, values + self.config.cliprange_value)
 
         vf_losses1 = (vpred - returns) ** 2
