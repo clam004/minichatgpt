@@ -30,8 +30,8 @@ class ValueHead(nn.Module):
 
     def forward(self, hidden_states):
 
-        #output = self.dropout(hidden_states)
-        output = hidden_states
+        output = self.dropout(hidden_states)
+        #output = hidden_states
 
         # For now force upcast in fp32 if needed. Let's keep the
         # output in fp32 for numerical stability.
