@@ -106,6 +106,8 @@ class Lab():
 
         self.reward_model = pipeline("sentiment-analysis", model="lvwerra/distilbert-imdb", device=device)
 
+        return self.reward_model
+
 
 
 
