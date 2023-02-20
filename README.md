@@ -1,7 +1,6 @@
 # minichatgpt
 
-minimal implementation of reinforcement learning from human feedback
-
+Focused dissection of the implementation details of a small simplified self contained toy project demonstrating reinforcement learning from human feedback (RLHF) with special emphasis on connecting the equations describing proximal policy optimization to the lines of pytorch code that apply PPO to work with sequences, such as completing sentences so they end with a positive sentiment. We do this not by self-supervised or supervised learning, but rather, by generating text and learning from scores assigned to that text after it is generated, this is analogous to the way ChatGPT was trained using human scores of model generated answers to instructions. 
 ## Building Development Environments
 
 ### python virtual environment for data science
