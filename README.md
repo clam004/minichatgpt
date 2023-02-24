@@ -48,7 +48,8 @@ and the changes you make to example_class_function will be available to you with
 
 ## Tutorial
 
-**Forward batching**: Since the models can be fairly big and we want to rollout large PPO batches this can lead to out-of-memory errors when doing the forward passes for text generation and sentiment analysis. We introduce the parameter `forward_batch_size` to split the forward passes into smaller batches. Although this hurts performance a little this is neglectible compared to the computations of the backward passes when optimizing the model. The same parameter is used in the `PPOTrainer` when doing forward passes. The `batch_size` should multiple of `forward_batch_size`.
+[Tutorial Slide Deck](https://docs.google.com/presentation/d/12yG8yuNl3JM8lAr3YCB_y2_3EHndZJaMvii7inT0WH0/edit?usp=sharing)
+[YouTube Video from Silicon Valley Code Camp](https://www.youtube.com/live/WnGFR-bSNWM)
 
 # References and Credits 
 
