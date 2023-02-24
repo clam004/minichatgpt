@@ -48,8 +48,8 @@ and the changes you make to example_class_function will be available to you with
 
 ## Tutorial
 
-[Tutorial Slide Deck](https://docs.google.com/presentation/d/12yG8yuNl3JM8lAr3YCB_y2_3EHndZJaMvii7inT0WH0/edit?usp=sharing)
-[YouTube Video from Silicon Valley Code Camp](https://www.youtube.com/live/WnGFR-bSNWM)
+- [Tutorial Slide Deck](https://docs.google.com/presentation/d/12yG8yuNl3JM8lAr3YCB_y2_3EHndZJaMvii7inT0WH0/edit?usp=sharing)
+- [YouTube Video from Silicon Valley Code Camp](https://www.youtube.com/live/WnGFR-bSNWM)
 
 # References and Credits 
 
