@@ -1,4 +1,3 @@
-import inspect
 import json
 import os
 from copy import deepcopy
@@ -104,7 +103,7 @@ class PreTrainedModelWrapper(nn.Module):
                     is_shared = True
 
             if is_shared:
-                # dowload each file and add it to the state_dict
+                # download each file and add it to the state_dict
                 state_dict = {}
                 for shard_file in files_to_download:
                     filename = hf_hub_download(pretrained_model_name_or_path, shard_file)
@@ -129,10 +128,7 @@ class PreTrainedModelWrapper(nn.Module):
         unsupported_kwargs = {}
 
         for key, value in kwargs.items():
-            if (
-                key in cls.supported_args
-                or key not in inspect.signature(cls.transformers_parent_class.from_pretrained).parameters.keys()
-            ):
+            if key in cls.supported_args:
                 supported_kwargs[key] = value
             else:
                 unsupported_kwargs[key] = value
@@ -253,3 +249,4 @@ def create_reference_model(
         param.requires_grad = False
 
     return ref_model.eval()
+

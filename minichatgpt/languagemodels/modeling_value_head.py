@@ -1,3 +1,4 @@
+import torch
 import torch.nn as nn
 from transformers import AutoModelForCausalLM, AutoModelForSeq2SeqLM
 
@@ -29,9 +30,7 @@ class ValueHead(nn.Module):
         self.flatten = nn.Flatten()
 
     def forward(self, hidden_states):
-
         output = self.dropout(hidden_states)
-        #output = hidden_states
 
         # For now force upcast in fp32 if needed. Let's keep the
         # output in fp32 for numerical stability.
@@ -153,6 +152,10 @@ class AutoModelForCausalLMWithValueHead(PreTrainedModelWrapper):
 
         value = self.v_head(last_hidden_state).squeeze(-1)
 
+        # force upcast in fp32 if logits are in half-precision
+        if lm_logits.dtype != torch.float32:
+            lm_logits = lm_logits.float()
+
         return (lm_logits, loss, value)
 
     def generate(self, *args, **kwargs):
@@ -171,7 +174,7 @@ class AutoModelForCausalLMWithValueHead(PreTrainedModelWrapper):
     def state_dict(self, *args, **kwargs):
         r"""
         Returns the state dictionary of the model. We add the state dictionary of the value head
-        to the state dictionary of the wrapped model by preprending the key with `v_head.`.
+        to the state dictionary of the wrapped model by prepending the key with `v_head.`.
         """
         pretrained_model_state_dict = self.pretrained_model.state_dict(*args, **kwargs)
         v_head_state_dict = self.v_head.state_dict(*args, **kwargs)
@@ -187,7 +190,7 @@ class AutoModelForCausalLMWithValueHead(PreTrainedModelWrapper):
     def post_init(self, state_dict):
         r"""
         We add the state dictionary of the value head to the state dictionary of the wrapped model
-        by preprending the key with `v_head.`. This function removes the `v_head.` prefix from the
+        by prepending the key with `v_head.`. This function removes the `v_head.` prefix from the
         keys of the value head state dictionary.
         """
         for k in list(state_dict.keys()):
@@ -241,7 +244,7 @@ class AutoModelForSeq2SeqLMWithValueHead(PreTrainedModelWrapper):
     def post_init(self, state_dict):
         r"""
         We add the state dictionary of the value head to the state dictionary of the wrapped model
-        by preprending the key with `v_head.`. This function removes the `v_head.` prefix from the
+        by prepending the key with `v_head.`. This function removes the `v_head.` prefix from the
         keys of the value head state dictionary.
         """
         for k in list(state_dict.keys()):
@@ -253,7 +256,7 @@ class AutoModelForSeq2SeqLMWithValueHead(PreTrainedModelWrapper):
     def state_dict(self, *args, **kwargs):
         r"""
         Returns the state dictionary of the model. We add the state dictionary of the value head
-        to the state dictionary of the wrapped model by preprending the key with `v_head.`.
+        to the state dictionary of the wrapped model by prepending the key with `v_head.`.
         """
         pretrained_model_state_dict = self.pretrained_model.state_dict(*args, **kwargs)
         v_head_state_dict = self.v_head.state_dict(*args, **kwargs)
@@ -300,6 +303,10 @@ class AutoModelForSeq2SeqLMWithValueHead(PreTrainedModelWrapper):
         loss = base_model_output.loss
 
         value = self.v_head(last_hidden_state).squeeze(-1)
+
+        # force upcast in fp32 if logits are in half-precision
+        if lm_logits.dtype != torch.float32:
+            lm_logits = lm_logits.float()
 
         return (lm_logits, loss, value)
 
