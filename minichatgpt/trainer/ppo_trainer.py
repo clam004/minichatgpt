@@ -642,7 +642,7 @@ class PPOTrainer(BaseTrainer):
         """
         Train one PPO minibatch
         Args:
-            logprobs (`torch.FloatTensor`):
+            old_logprobs (`torch.FloatTensor`):
                 Log probabilities of the model, shape [batch_size, response_length]
             values (`torch.FloatTensor`):
                 Values of the value head, shape [batch_size, response_length]
