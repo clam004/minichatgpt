@@ -1,11 +1,12 @@
 from setuptools import setup, find_packages
 
 REQUIRED_PKGS = [
-    "torch>=1.4.0",
-    "transformers>=4.18.0",
+    "torch==2.5.0",
+    "transformers==4.38.2",
     "numpy>=1.18.2",
     "accelerate",
-    "datasets",
+    "datasets>=1.17.0",
+    "tqdm",
 ]
 
 setup(

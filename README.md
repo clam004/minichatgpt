@@ -9,19 +9,13 @@ Focused dissection of the implementation details of a small simplified self cont
 you@you chat-api % python3 -m venv venv
 you@you chat-api % source venv/bin/activate
 (venv) you@you chat-api % pip install --upgrade pip
-(venv) you@you chat-api % pip install -r requirements.txt
 ```
 
 ### install package using a setup.py and pip
 
-To install package for development, from inside the top-level or main minichatgpt directory (the one where if you `ls` you see `setup.py`, `requirements.txt` and `README.md` in the same folder as you)
-run the below at the command line or terminal:
-
-```console
-pip install -e .
-```
-
-leave out the `-e` for production `pip install .`, for other development packages like jupyter notebook and matplotlib, run:
+To install package for development, from inside the top-level or 
+main minichatgpt directory (the one where if you `ls` you see `setup.py`, `requirements.txt` and `README.md` in the same folder as you)
+run `pip install -e .` at the command line or terminal. Leave out the `-e` for production `pip install .`, for other development packages like jupyter notebook and matplotlib, run:
 
 ```console
 pip install -e ".[interactive]"
