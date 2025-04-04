@@ -13,7 +13,7 @@ run `pip install -e .` at the command line or terminal. Leave out the `-e` for p
 you@you chat-api % python3 -m venv venv
 you@you chat-api % source venv/bin/activate
 (venv) you@you chat-api % pip install --upgrade pip
-(venv) pip install -e ".[interactive]"
+(venv) you@you chat-api % pip install -e ".[interactive]"
 ```
 
 you should see something like
